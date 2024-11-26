@@ -19,21 +19,24 @@ while cap.isOpened():
 
     if results.multi_hand_landmarks is not None:
 
-        x_tip = int(results.multi_hand_landmarks[0].landmark[8].x *
+        x_top = int(results.multi_hand_landmarks[0].landmark[8].x *
                 flippedRGB.shape[1])
-        y_tip = int(results.multi_hand_landmarks[0].landmark[8].y *
+        y_top = int(results.multi_hand_landmarks[0].landmark[8].y *
                 flippedRGB.shape[0])
 
-        print(k, x_tip, y_tip, end=' ')
-        cv2.circle(flippedRGB, (x_tip, y_tip), 10, (255, 0, 0), -1)
+        cv2.circle(flippedRGB, (x_top, y_top), 10, (255, 0, 0), -1)
 
-        x_tip = int(results.multi_hand_landmarks[0].landmark[12].x *
+        x_low = int(results.multi_hand_landmarks[0].landmark[5].x *
                     flippedRGB.shape[1])
-        y_tip = int(results.multi_hand_landmarks[0].landmark[12].y *
+        y_low = int(results.multi_hand_landmarks[0].landmark[5].y *
                     flippedRGB.shape[0])
 
-        print(x_tip, y_tip)
-        cv2.circle(flippedRGB, (x_tip, y_tip), 10, (0, 255, 0), -1)
+        if abs(y_top - y_low) <= 40:
+            print('YES')
+        else:
+            print('NO')
+
+        cv2.circle(flippedRGB, (x_low, y_low), 10, (0, 255, 0), -1)
 
     res_image = cv2.cvtColor(flippedRGB, cv2.COLOR_RGB2BGR)
     cv2.imshow("Hands", res_image)
