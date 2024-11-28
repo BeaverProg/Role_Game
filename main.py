@@ -37,50 +37,67 @@ def draw_field():
 
 
 def help_draw():
-    x_top = int(results.multi_hand_landmarks[0].landmark[8].x *
+    x_top = int(results.multi_hand_landmarks[0].landmark[4].x *
                 flippedRGB.shape[1])
-    y_top = int(results.multi_hand_landmarks[0].landmark[8].y *
+    y_top = int(results.multi_hand_landmarks[0].landmark[4].y *
                 flippedRGB.shape[0])
 
     cv2.circle(flippedRGB, (x_top, y_top), 10, (255, 0, 0), -1)
 
-    x_low = int(results.multi_hand_landmarks[0].landmark[5].x *
+    x_low = int(results.multi_hand_landmarks[0].landmark[8].x *
                 flippedRGB.shape[1])
-    y_low = int(results.multi_hand_landmarks[0].landmark[5].y *
+    y_low = int(results.multi_hand_landmarks[0].landmark[8].y *
                 flippedRGB.shape[0])
 
-    cv2.circle(flippedRGB, (x_low, y_low), 10, (0, 255, 0), -1)
+    cv2.circle(flippedRGB, (x_low, y_low), 10, (255, 0, 0), -1)
 
-    x_top = int(results.multi_hand_landmarks[0].landmark[12].x *
+
+def fingers_pos():
+
+    x = int(results.multi_hand_landmarks[0].landmark[4].x *
                 flippedRGB.shape[1])
-    y_top = int(results.multi_hand_landmarks[0].landmark[12].y *
+    y = int(results.multi_hand_landmarks[0].landmark[4].y *
                 flippedRGB.shape[0])
 
-    cv2.circle(flippedRGB, (x_top, y_top), 10, (255, 0, 0), -1)
+    row = 0
+    col = 0
 
-    x_low = int(results.multi_hand_landmarks[0].landmark[9].x *
-                flippedRGB.shape[1])
-    y_low = int(results.multi_hand_landmarks[0].landmark[9].y *
-                flippedRGB.shape[0])
+    for i in range(len(line_y)):
+        if line_y[i] > y:
+            row = max(0, i - 1)
+            break
+        elif i == len(line_y) - 1:
+            row = i
+            break
 
-    cv2.circle(flippedRGB, (x_low, y_low), 10, (0, 255, 0), -1)
+    for i in range(len(line_x)):
+        if line_x[i] > x:
+            col = max(0, i - 1)
+            break
+        elif i == len(line_x) - 1:
+            col = i
+            break
+
+    return field_plane[row][col]
 
 
 handsDetector = mp.solutions.hands.Hands()
 cap = cv2.VideoCapture(0)
-k = 0
 
 main_char = cv2.imread('wizard1.png')
 main_char = cv2.cvtColor(main_char, cv2.COLOR_BGR2RGB)
 char_x = 5
-char_y = 489
+char_y = 5
+goal_x = 5
+goal_y = 5
 field_plane = [[[5, 5], [196, 5], [387, 5], [578, 5], [766, 5], [957, 5]],
-               [[5, 245], [196, 245], [387, 245], [578, 245], [766, 254], [957, 245]],
-               [[5, 489], [196, 489], [387, 487], [578, 487], [766, 287], [957, 245]]]
+               [[5, 245], [196, 245], [387, 245], [578, 245], [766, 245], [957, 245]],
+               [[5, 489], [196, 489], [387, 487], [578, 487], [766, 487], [957, 487]]]
+line_x = [5, 196, 387, 578, 766, 957]
+line_y = [5, 245, 489]
 
 
 while cap.isOpened():
-    k += 1
 
     ret, frame = cap.read()
     if cv2.waitKey(1) & 0xFF == ord('q') or not ret:
@@ -96,9 +113,15 @@ while cap.isOpened():
 
         help_draw()
 
+        y_top = int(results.multi_hand_landmarks[0].landmark[4].y *
+                    flippedRGB.shape[0])
+        y_low = int(results.multi_hand_landmarks[0].landmark[8].y *
+                    flippedRGB.shape[0])
 
-        # check_finger = abs(y_top - y_low) <= 140
-        pass
+        check_finger = abs(y_top - y_low) <= 30
+
+        if check_finger:
+            char_x, char_y = fingers_pos()
 
     res_image = cv2.cvtColor(flippedRGB, cv2.COLOR_RGB2BGR)
     cv2.imshow("Hands", res_image)
