@@ -36,7 +36,7 @@ def draw_field():
     cv2.line(flippedRGB, (190 * 6, 0), (190 * 6, 720), (149, 255, 110), 10)
 
 
-def help_draw():
+def cursor_draw():
     x_top = int(results.multi_hand_landmarks[0].landmark[4].x *
                 flippedRGB.shape[1])
     y_top = int(results.multi_hand_landmarks[0].landmark[4].y *
@@ -81,6 +81,33 @@ def fingers_pos():
     return field_plane[row][col]
 
 
+def character_moving():
+    global char_x, char_y, goal_y, goal_x
+
+    y_top = int(results.multi_hand_landmarks[0].landmark[4].y *
+                flippedRGB.shape[0])
+    y_low = int(results.multi_hand_landmarks[0].landmark[8].y *
+                flippedRGB.shape[0])
+
+    check_finger = abs(y_top - y_low) <= 30
+
+    if goal_y != char_y:
+        char_y += 4 * (goal_y - char_y) // abs(goal_y - char_y)
+        if abs(goal_y - char_y) <= 3:
+            char_y = goal_y
+
+    elif char_x != goal_x:
+        char_x += 4 * (goal_x - char_x) // abs(goal_x - char_x)
+        if abs(goal_x - char_x) <= 3:
+            char_x = goal_x
+
+    elif check_finger:
+        goal_x, goal_y = fingers_pos()
+
+        if abs(char_x - goal_x) > 200 or abs(char_y - goal_y) > 300:
+            goal_x, goal_y = char_x, char_y
+
+
 handsDetector = mp.solutions.hands.Hands()
 cap = cv2.VideoCapture(0)
 
@@ -111,17 +138,9 @@ while cap.isOpened():
 
     if results.multi_hand_landmarks is not None:
 
-        help_draw()
+        cursor_draw()
 
-        y_top = int(results.multi_hand_landmarks[0].landmark[4].y *
-                    flippedRGB.shape[0])
-        y_low = int(results.multi_hand_landmarks[0].landmark[8].y *
-                    flippedRGB.shape[0])
-
-        check_finger = abs(y_top - y_low) <= 30
-
-        if check_finger:
-            char_x, char_y = fingers_pos()
+        character_moving()
 
     res_image = cv2.cvtColor(flippedRGB, cv2.COLOR_RGB2BGR)
     cv2.imshow("Hands", res_image)
