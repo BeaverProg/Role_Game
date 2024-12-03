@@ -12,6 +12,7 @@ def touch(ch: 'Chest', mn: 'Hero') -> bool:
     return False
 
 
+
 class Hero:
 
     def __init__(self, x: int = 5, y: int = 5):
