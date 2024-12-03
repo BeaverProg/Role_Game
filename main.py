@@ -1,6 +1,67 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+import random
+
+
+def touch(ch: 'Chest', mn: 'Hero') -> bool:
+
+    if ch.x == mn.x and ch.y == mn.y:
+
+        return True
+    return False
+
+
+class Hero:
+
+    def __init__(self, x: int = 5, y: int = 5):
+
+        self.x = x
+        self.y = y
+        self.goal_x = x
+        self.goal_y = y
+
+        self.hp = 100
+        self.atk = 5
+        self.img = cv2.imread('wizard.png')
+        self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
+
+
+class Chest:
+
+    def __init__(self, x: int = 387, y: int = 245):
+
+        self.x = x
+        self.y = y
+        self.alive = False
+        self.turns_before_spawn = 5
+        self.img = cv2.imread('chest.png')
+
+    def random_position(self, char: "Hero") -> None:
+
+        if random.randint(1, self.turns_before_spawn) == 1 and not self.alive:
+            self.turns_before_spawn = 5
+
+            self.alive = True
+
+            chest_x = random.choice(line_x)
+            chest_y = random.choice(line_y)
+
+            while chest_x == char.x and chest_y == char.y:
+                chest_x = random.choice(line_x)
+                chest_y = random.choice(line_y)
+
+            self.x = chest_x
+            self.y = chest_y
+
+    def draw_chest(self, img2, char: 'Hero'):
+
+        if self.alive and not touch(self, char):
+
+            return draw_character(img2, self.img, self.x, self.y)
+        else:
+            self.alive = False
+            return img2
 
 
 # код функции взят с docs.opencv.org
@@ -25,15 +86,14 @@ def draw_character(img1, img2, x=0, y=0):
 
 def draw_field():
 
-    cv2.line(flippedRGB, (0, 240), (1280, 240), (149, 255, 110), 10)
-    cv2.line(flippedRGB, (0, 240 * 2), (1280, 240 * 2), (149, 255, 110), 10)
+    cv2.line(flippedRGB, (0, 240), (190 * 5, 240), (149, 255, 110), 10)
+    cv2.line(flippedRGB, (0, 240 * 2), (190 * 5, 240 * 2), (149, 255, 110), 10)
 
     cv2.line(flippedRGB, (190, 0), (190, 720), (149, 255, 110), 10)
     cv2.line(flippedRGB, (190 * 2, 0), (190 * 2, 720), (149, 255, 110), 10)
     cv2.line(flippedRGB, (190 * 3, 0), (190 * 3, 720), (149, 255, 110), 10)
     cv2.line(flippedRGB, (190 * 4, 0), (190 * 4, 720), (149, 255, 110), 10)
     cv2.line(flippedRGB, (190 * 5, 0), (190 * 5, 720), (149, 255, 110), 10)
-    cv2.line(flippedRGB, (190 * 6, 0), (190 * 6, 720), (149, 255, 110), 10)
 
 
 def cursor_draw():
@@ -82,7 +142,6 @@ def fingers_pos():
 
 
 def character_moving():
-    global char_x, char_y, goal_y, goal_x
 
     y_top = int(results.multi_hand_landmarks[0].landmark[4].y *
                 flippedRGB.shape[0])
@@ -91,36 +150,33 @@ def character_moving():
 
     check_finger = abs(y_top - y_low) <= 30
 
-    if goal_y != char_y:
-        char_y += 4 * (goal_y - char_y) // abs(goal_y - char_y)
-        if abs(goal_y - char_y) <= 3:
-            char_y = goal_y
+    if main_char.goal_y != main_char.y:
+        main_char.y += 4 * (main_char.goal_y - main_char.y) // abs(main_char.goal_y - main_char.y)
+        if abs(main_char.goal_y - main_char.y) <= 3:
+            main_char.y = main_char.goal_y
 
-    elif char_x != goal_x:
-        char_x += 4 * (goal_x - char_x) // abs(goal_x - char_x)
-        if abs(goal_x - char_x) <= 3:
-            char_x = goal_x
+    elif main_char.x != main_char.goal_x:
+        main_char.x += 4 * (main_char.goal_x - main_char.x) // abs(main_char.goal_x - main_char.x)
+        if abs(main_char.goal_x - main_char.x) <= 3:
+            main_char.x = main_char.goal_x
 
     elif check_finger:
-        goal_x, goal_y = fingers_pos()
+        main_char.goal_x, main_char.goal_y = fingers_pos()
 
-        if abs(char_x - goal_x) > 200 or abs(char_y - goal_y) > 300:
-            goal_x, goal_y = char_x, char_y
+        if (abs(main_char.x - main_char.goal_x) > 200 or abs(main_char.y - main_char.goal_y) > 300 or
+                (main_char.goal_x != main_char.x and main_char.goal_y != main_char.y)):
+            main_char.goal_x, main_char.goal_y = main_char.x, main_char.y
 
 
 handsDetector = mp.solutions.hands.Hands()
 cap = cv2.VideoCapture(0)
 
-main_char = cv2.imread('wizard1.png')
-main_char = cv2.cvtColor(main_char, cv2.COLOR_BGR2RGB)
-char_x = 5
-char_y = 5
-goal_x = 5
-goal_y = 5
-field_plane = [[[5, 5], [196, 5], [387, 5], [578, 5], [766, 5], [957, 5]],
-               [[5, 245], [196, 245], [387, 245], [578, 245], [766, 245], [957, 245]],
-               [[5, 489], [196, 489], [387, 487], [578, 487], [766, 487], [957, 487]]]
-line_x = [5, 196, 387, 578, 766, 957]
+main_char = Hero()
+chest = Chest()
+field_plane = [[[5, 5], [196, 5], [387, 5], [578, 5], [766, 5]],
+               [[5, 245], [196, 245], [387, 245], [578, 245], [766, 245]],
+               [[5, 489], [196, 489], [387, 487], [578, 487], [766, 487]]]
+line_x = [5, 196, 387, 578, 766]
 line_y = [5, 245, 489]
 
 
@@ -133,8 +189,12 @@ while cap.isOpened():
     flippedRGB = cv2.cvtColor(flipped, cv2.COLOR_BGR2RGB)
     results = handsDetector.process(flippedRGB)
 
-    flippedRGB = draw_character(flippedRGB, main_char, char_x, char_y)
+    chest.random_position(main_char)
+    flippedRGB = chest.draw_chest(flippedRGB, main_char)
+
     draw_field()
+
+    flippedRGB = draw_character(flippedRGB, main_char.img, main_char.x, main_char.y)
 
     if results.multi_hand_landmarks is not None:
 
