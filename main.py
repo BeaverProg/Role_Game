@@ -4,15 +4,6 @@ import numpy as np
 import random
 
 
-def touch(ch: 'Chest', mn: 'Hero') -> bool:
-
-    if ch.x == mn.x and ch.y == mn.y:
-
-        return True
-    return False
-
-
-
 class Hero:
 
     def __init__(self, x: int = 5, y: int = 5):
@@ -23,9 +14,41 @@ class Hero:
         self.goal_y = y
 
         self.hp = 100
-        self.atk = 5
-        self.img = cv2.imread('wizard.png')
+        self.atk = 10
+        self.df = 10
+        self.money_counter = 0
+
+        self.img = cv2.imread('images/wizard.png')
         self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
+
+    def draw_text(self, img2):
+
+        img2 = cv2.putText(img2, 'Health: ' + str(main_char.hp), (190 * 5 + 25, 100),
+                                 cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
+        img2 = cv2.putText(img2, 'Strength: ' + str(main_char.atk), (190 * 5 + 25, 100 + 60),
+                                 cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
+        img2 = cv2.putText(img2, 'Defence: ' + str(main_char.df), (190 * 5 + 25, 100 + 60 + 60),
+                           cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
+        img2 = cv2.putText(img2, 'Money: ' + str(main_char.money_counter), (190 * 5 + 25, 100 + 60 + 60 + 60),
+                           cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
+
+        return img2
+
+    def get_prise(self):
+
+        prise = random.randint(1, 5)
+        if self.hp == 100:
+            if prise == 1:
+                self.hp -= 30
+            else:
+                self.money_counter += 1
+        else:
+            if prise == 1:
+                self.hp -= 30
+            elif prise == 2 or prise == 3:
+                self.hp += 10
+            else:
+                self.money_counter += 1
 
 
 class Chest:
@@ -34,14 +57,12 @@ class Chest:
 
         self.x = x
         self.y = y
-        self.alive = False
-        self.turns_before_spawn = 5
-        self.img = cv2.imread('chest.png')
+        self.img = cv2.imread('images/chest.png')
+        self.alive = True
 
     def random_position(self, char: "Hero") -> None:
 
-        if random.randint(1, self.turns_before_spawn) == 1 and not self.alive:
-            self.turns_before_spawn = 5
+        if not self.alive:
 
             self.alive = True
 
@@ -55,24 +76,68 @@ class Chest:
             self.x = chest_x
             self.y = chest_y
 
-    def draw_chest(self, img2, char: 'Hero'):
+    def draw(self, img2):
 
-        if self.alive and not touch(self, char):
-
-            return draw_character(img2, self.img, self.x, self.y)
+        if chest.alive:
+            return draw_character(img2, self.img, self.x, self.y + 40)
         else:
-            self.alive = False
             return img2
 
 
+class Craft:
+
+    def __init__(self):
+
+        self.x = 766
+        self.y = 5
+        self.img = cv2.imread('images/craft.png')
+        self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
+
+        self.products = ['stick', 'shield']
+
+        self.stick_img = cv2.imread('images/stick.png')
+        self.stick_img = cv2.cvtColor(self.stick_img, cv2.COLOR_BGR2RGB)
+        self.stick_img = cv2.resize(self.stick_img, (198, 480))
+
+        self.shield_img = cv2.imread('images/shield.png')
+        self.shield_img = cv2.cvtColor(self.shield_img, cv2.COLOR_BGR2RGB)
+        self.shield_img = cv2.resize(self.shield_img, (368, 448))
+
+    def draw_items(self, img2):
+
+        if 'stick' in self.products:
+            img2 = draw_character(img2, self.stick_img, 200, 70)
+            img2 = cv2.putText(img2, 'Attack: +10 ', (200, 150 + 480 - 20),
+                               cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
+            img2 = cv2.putText(img2, 'Cost: 10 ', (200, 150 + 480 + 40),
+                               cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
+
+        if 'shield' in self.products:
+            img2 = draw_character(img2, self.shield_img, 750, 100)
+            img2 = cv2.putText(img2, 'Defence: +10 ', (750, 150 + 480 - 20),
+                               cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
+            img2 = cv2.putText(img2, 'Cost: 10 ', (750, 150 + 480 + 40),
+                               cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
+
+        return img2
+
+
+def touch(ch: 'Chest', mn: 'Hero') -> None:
+
+    if ch.x == mn.x and ch.y == mn.y:
+
+        ch.alive = False
+        mn.get_prise()
+
+
 # код функции взят с docs.opencv.org
-def draw_character(img1, img2, x=0, y=0):
+def draw_character(img1, img2, x=0, y=0) -> np.array:
 
     rows, cols, channels = img2.shape
     roi = img1[y:rows+y, x:cols+x]
 
     img2gray = cv2.cvtColor(img2, cv2.COLOR_RGB2GRAY)
-    ret, mask = cv2.threshold(img2gray, 10, 255, cv2.THRESH_BINARY)
+    _, mask = cv2.threshold(img2gray, 10, 255, cv2.THRESH_BINARY)
     mask_inv = cv2.bitwise_not(mask)
 
     img1_bg = cv2.bitwise_and(roi, roi, mask=mask_inv)
@@ -87,6 +152,7 @@ def draw_character(img1, img2, x=0, y=0):
 
 def draw_field():
 
+    # Числа подбирались вручную, исходя из рамеров картинок
     cv2.line(flippedRGB, (0, 240), (190 * 5, 240), (149, 255, 110), 10)
     cv2.line(flippedRGB, (0, 240 * 2), (190 * 5, 240 * 2), (149, 255, 110), 10)
 
@@ -115,10 +181,8 @@ def cursor_draw():
 
 def fingers_pos():
 
-    x = int(results.multi_hand_landmarks[0].landmark[4].x *
-                flippedRGB.shape[1])
-    y = int(results.multi_hand_landmarks[0].landmark[4].y *
-                flippedRGB.shape[0])
+    x = int(results.multi_hand_landmarks[0].landmark[4].x * flippedRGB.shape[1])
+    y = int(results.multi_hand_landmarks[0].landmark[4].y * flippedRGB.shape[0])
 
     row = 0
     col = 0
@@ -146,19 +210,23 @@ def character_moving():
 
     y_top = int(results.multi_hand_landmarks[0].landmark[4].y *
                 flippedRGB.shape[0])
+    x_top = int(results.multi_hand_landmarks[0].landmark[4].x *
+                flippedRGB.shape[0])
     y_low = int(results.multi_hand_landmarks[0].landmark[8].y *
                 flippedRGB.shape[0])
+    x_low = int(results.multi_hand_landmarks[0].landmark[8].x *
+                flippedRGB.shape[0])
 
-    check_finger = abs(y_top - y_low) <= 30
+    check_finger = abs(y_top - y_low) <= 30 and abs(x_low - x_top) <= 30
 
     if main_char.goal_y != main_char.y:
-        main_char.y += 4 * (main_char.goal_y - main_char.y) // abs(main_char.goal_y - main_char.y)
-        if abs(main_char.goal_y - main_char.y) <= 3:
+        main_char.y += 10 * (main_char.goal_y - main_char.y) // abs(main_char.goal_y - main_char.y)
+        if abs(main_char.goal_y - main_char.y) <= 9:
             main_char.y = main_char.goal_y
 
     elif main_char.x != main_char.goal_x:
-        main_char.x += 4 * (main_char.goal_x - main_char.x) // abs(main_char.goal_x - main_char.x)
-        if abs(main_char.goal_x - main_char.x) <= 3:
+        main_char.x += 10 * (main_char.goal_x - main_char.x) // abs(main_char.goal_x - main_char.x)
+        if abs(main_char.goal_x - main_char.x) <= 9:
             main_char.x = main_char.goal_x
 
     elif check_finger:
@@ -174,11 +242,13 @@ cap = cv2.VideoCapture(0)
 
 main_char = Hero()
 chest = Chest()
+craft = Craft()
 field_plane = [[[5, 5], [196, 5], [387, 5], [578, 5], [766, 5]],
                [[5, 245], [196, 245], [387, 245], [578, 245], [766, 245]],
-               [[5, 489], [196, 489], [387, 487], [578, 487], [766, 487]]]
+               [[5, 489], [196, 489], [387, 489], [578, 489], [766, 489]]]
 line_x = [5, 196, 387, 578, 766]
 line_y = [5, 245, 489]
+world_status = 'main'
 
 
 while cap.isOpened():
@@ -188,23 +258,38 @@ while cap.isOpened():
         break
     flipped = np.fliplr(frame)
     flippedRGB = cv2.cvtColor(flipped, cv2.COLOR_BGR2RGB)
+    flippedRGB = cv2.resize(flippedRGB, (1280, 720))
     results = handsDetector.process(flippedRGB)
 
-    chest.random_position(main_char)
-    flippedRGB = chest.draw_chest(flippedRGB, main_char)
+    if world_status == 'main':
+        chest.random_position(main_char)
+        flippedRGB = chest.draw(flippedRGB)
 
-    draw_field()
+        draw_field()
 
-    flippedRGB = draw_character(flippedRGB, main_char.img, main_char.x, main_char.y)
+        flippedRGB = draw_character(flippedRGB, craft.img, craft.x, craft.y)
 
-    if results.multi_hand_landmarks is not None:
+        flippedRGB = main_char.draw_text(flippedRGB)
 
-        cursor_draw()
+        flippedRGB = draw_character(flippedRGB, main_char.img, main_char.x, main_char.y)
 
-        character_moving()
+        if results.multi_hand_landmarks is not None:
+
+            cursor_draw()
+
+            character_moving()
+
+            touch(chest, main_char)
+
+        if craft.x == main_char.x and craft.y == main_char.y:
+            world_status = 'craft'
+
+    elif world_status == 'craft':
+
+        craft.draw_items(flippedRGB)
 
     res_image = cv2.cvtColor(flippedRGB, cv2.COLOR_RGB2BGR)
-    cv2.imshow("Hands", res_image)
+    cv2.imshow("Game", res_image)
 
 
 handsDetector.close()
