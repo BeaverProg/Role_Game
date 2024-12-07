@@ -1,5 +1,6 @@
 import cv2
 import mediapipe as mp
+import numpy
 import numpy as np
 import random
 from time import time
@@ -14,15 +15,15 @@ class Hero:
         self.goal_x = x
         self.goal_y = y
 
-        self.hp = 100 + 20
-        self.atk = 10 + 40
-        self.df = 10 + 10
+        self.hp = 100 #+ 20
+        self.atk = 10 #+ 40
+        self.df = 10 #+ 10
         self.money_counter = 0
 
         self.img = cv2.imread('images/wizard.png')
         self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
 
-    def draw_text(self, img2):
+    def draw_text(self, img2: numpy.array) -> numpy.array:
 
         img2 = cv2.putText(img2, 'Health: ' + str(main_char.hp), (190 * 5 + 25, 100),
                                  cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
@@ -35,7 +36,7 @@ class Hero:
 
         return img2
 
-    def get_prise(self):
+    def get_prise(self) -> None:
 
         prise = random.randint(1, 5)
         if self.hp >= 100:
@@ -51,7 +52,7 @@ class Hero:
             else:
                 self.money_counter += 2
 
-    def character_moving(self, results):
+    def character_moving(self, results: type) -> None:
 
         y_top = int(results.multi_hand_landmarks[0].landmark[4].y *
                     flippedRGB.shape[0])
@@ -62,7 +63,7 @@ class Hero:
         x_low = int(results.multi_hand_landmarks[0].landmark[8].x *
                     flippedRGB.shape[0])
 
-        check_finger = abs(y_top - y_low) <= 100 and abs(x_low - x_top) <= 100
+        check_finger = abs(y_top - y_low) <= 30 and abs(x_low - x_top) <= 30
 
         if self.goal_y != self.y:
             self.y += 10 * (self.goal_y - self.y) // abs(self.goal_y - self.y)
@@ -109,7 +110,7 @@ class Chest:
             self.x = chest_x
             self.y = chest_y
 
-    def draw(self, img2):
+    def draw(self, img2: numpy.array) -> numpy.array:
 
         if chest.alive:
             return draw_character(img2, self.img, self.x, self.y + 40)
@@ -137,7 +138,7 @@ class Craft:
         self.shield_img = cv2.cvtColor(self.shield_img, cv2.COLOR_BGR2RGB)
         self.shield_img = cv2.resize(self.shield_img, (368, 448))
 
-    def draw_items(self, img2):
+    def draw_items(self, img2: numpy.array) -> numpy.array:
 
         if 'stick' in self.products:
             img2 = draw_character(img2, self.stick_img, 200, 70)
@@ -171,7 +172,7 @@ class Craft:
 
         return img2
 
-    def buy(self, results, char: 'Hero', img2):
+    def buy(self, results: type, char: 'Hero', img2: numpy.array) -> numpy.array:
 
         y_top = int(results.multi_hand_landmarks[0].landmark[4].y *
                     flippedRGB.shape[0])
@@ -182,7 +183,7 @@ class Craft:
         x_low = int(results.multi_hand_landmarks[0].landmark[8].x *
                     flippedRGB.shape[0])
 
-        check_finger = abs(y_top - y_low) <= 100 and abs(x_low - x_top) <= 100
+        check_finger = abs(y_top - y_low) <= 30 and abs(x_low - x_top) <= 30
 
         if check_finger and 130 <= x_top <= 230 and 100 <= y_top <= 530 and 'stick' in self.products:
 
@@ -217,7 +218,7 @@ class Craft:
 
         return img2
 
-    def exit_button(self, results, img2):
+    def exit_button(self, results: type, img2: numpy.array) -> str:
 
         y_top = int(results.multi_hand_landmarks[0].landmark[4].y *
                     flippedRGB.shape[0])
@@ -258,7 +259,7 @@ class Alchemi(Craft):
         self.shield_img = cv2.cvtColor(self.shield_img, cv2.COLOR_BGR2RGB)
         self.shield_img = cv2.resize(self.shield_img, (368, 448))
 
-    def exit_button(self, results, img2):
+    def exit_button(self, results: type, img2: numpy.array) -> str:
         ans = super().exit_button(results, img2)
         if ans == 'craft':
             ans = 'alch'
@@ -294,7 +295,7 @@ class Dragon:
         self.turn = True
         self.last_kick = time()
 
-    def battle(self, char: 'Hero'):
+    def battle(self, char: 'Hero') -> numpy.array:
 
         if not char.hp * self.hp > 0:
 
@@ -320,7 +321,7 @@ class Dragon:
         else:
             return cv2.circle(flippedRGB, (970, 360), 200, (0, 255, 0), -1)
 
-    def draw(self, char: 'Hero', img2):
+    def draw(self, char: 'Hero', img2: numpy.array) -> numpy.array:
 
         if char.hp > 0 and self.hp > 0:
 
@@ -347,7 +348,7 @@ class Dragon:
 
 
 # код функции взят с docs.opencv.org
-def draw_character(img1, img2, x=0, y=0) -> np.array:
+def draw_character(img1: numpy.array, img2: numpy.array_equal, x=0, y=0) -> np.array:
 
     rows, cols, channels = img2.shape
     roi = img1[y:rows+y, x:cols+x]
@@ -366,7 +367,7 @@ def draw_character(img1, img2, x=0, y=0) -> np.array:
     return img1
 
 
-def draw_field():
+def draw_field() -> None:
 
     # Числа подбирались вручную, исходя из рамеров картинок
     cv2.line(flippedRGB, (0, 240), (190 * 5, 240), (149, 255, 110), 10)
@@ -387,7 +388,7 @@ def touch(ch: 'Chest', mn: 'Hero') -> None:
         mn.get_prise()
 
 
-def cursor_draw():
+def cursor_draw() -> None:
     x_top = int(results.multi_hand_landmarks[0].landmark[4].x *
                 flippedRGB.shape[1])
     y_top = int(results.multi_hand_landmarks[0].landmark[4].y *
@@ -403,7 +404,7 @@ def cursor_draw():
     cv2.circle(flippedRGB, (x_low, y_low), 10, (255, 0, 0), -1)
 
 
-def fingers_pos():
+def fingers_pos() -> list[int]:
 
     x = int(results.multi_hand_landmarks[0].landmark[4].x * flippedRGB.shape[1])
     y = int(results.multi_hand_landmarks[0].landmark[4].y * flippedRGB.shape[0])
@@ -444,7 +445,7 @@ field_plane = [[[5, 5], [196, 5], [387, 5], [578, 5], [766, 5]],
                [[5, 489], [196, 489], [387, 489], [578, 489], [766, 489]]]
 line_x = [5, 196, 387, 578, 766]
 line_y = [5, 245, 489]
-world_status = 'battle'
+world_status = 'main'
 
 
 while cap.isOpened():
