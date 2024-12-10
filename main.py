@@ -15,10 +15,10 @@ class Hero:
         self.goal_x = x
         self.goal_y = y
 
-        self.hp = 100 #+ 20
-        self.atk = 10 #+ 40
-        self.df = 10 #+ 10
-        self.money_counter = 0
+        self.hp = 100 + 20
+        self.atk = 10 + 40
+        self.df = 10 + 10
+        self.money_counter = 30
 
         self.img = cv2.imread('images/wizard.png')
         self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
@@ -189,7 +189,7 @@ class Craft:
 
             if char.money_counter < 5:
 
-                img2 = cv2.putText(img2, 'Not enough money ', (670, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                img2 = cv2.putText(img2, 'Not enough money ', (700, 50), cv2.FONT_HERSHEY_SIMPLEX,
                                    1.5, (0, 255, 0), 3, cv2.LINE_AA)
 
             else:
@@ -204,7 +204,7 @@ class Craft:
 
             if char.money_counter < 5 or char.money_counter < 20 and world_status == 'alch':
 
-                img2 = cv2.putText(img2, 'Not enough money ', (670, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                img2 = cv2.putText(img2, 'Not enough money ', (700, 50), cv2.FONT_HERSHEY_SIMPLEX,
                                    1.5, (0, 255, 0), 3, cv2.LINE_AA)
 
             else:
@@ -290,7 +290,7 @@ class Dragon:
 
         self.atk = 25
         self.df = 10
-        self.hp = 500
+        self.hp = random.randint(3, 5) * 100
 
         self.turn = True
         self.last_kick = time()
@@ -301,24 +301,24 @@ class Dragon:
 
             pass
 
-        elif self.turn and time() - self.last_kick > 0.25:
+        elif self.turn and time() - self.last_kick > 0.5:
 
             char.hp -= max(self.atk - char.df, 0)
 
             self.turn = False
             self.last_kick = time()
 
-        elif time() - self.last_kick > 0.25:
+        elif time() - self.last_kick > 0.5:
 
             self.hp -= max(char.atk - self.df, 0)
 
             self.turn = True
             self.last_kick = time()
 
-        if not self.turn:
+        if not self.turn and char.hp * self.hp > 0:
 
             return cv2.circle(flippedRGB, (314, 450), 100, (0, 255, 0), -1)
-        else:
+        elif char.hp * self.hp > 0:
             return cv2.circle(flippedRGB, (970, 360), 200, (0, 255, 0), -1)
 
     def draw(self, char: 'Hero', img2: numpy.array) -> numpy.array:
